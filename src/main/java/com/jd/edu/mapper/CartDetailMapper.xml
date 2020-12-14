@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.edu.mapper.CartDetailMapper">
+    <resultMap id="CartDetailMapper" type="com.jd.edu.entity.CartDetail">
+        <result column="cart_id" jdbcType="VARCHAR" property="cartId" />
+        <result column="goods_id" jdbcType="VARCHAR" property="goodsId" />
+        <result column="cart_goods_number" jdbcType="TINYINT" property="cartGoodsNumber" />
+        <result column="goods_price" jdbcType="FLOAT" property="goodsPrice" />
+        <result column="price" jdbcType="FLOAT" property="price" />
+        <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+        <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+
+        <association property="commodity" javaType="com.jd.edu.entity.Commodity">
+            <id column="commodity_id" jdbcType="VARCHAR" property="commodityId" />
+            <result column="commodity_name" jdbcType="VARCHAR" property="commodityName" />
+            <result column="commodity_stock" jdbcType="TINYINT" property="commodityStock" />
+            <result column="commodity_picture" jdbcType="VARCHAR" property="commodityPicture" />
+        </association>
+    </resultMap>
+
+
+    <!--        <select id="selectCommodityById" resultMap="CartDetailMapper" parameterType="com.jd.edu.entity.CartDetail">-->
+    <!--        SELECT c.commodity_name,c.commodity_picture,c.commodity_stock,cd.cart_goods_number,cd.goods_price-->
+    <!--        FROM cart_detail cd , commodity c-->
+    <!--        WHERE cd.goods_id=c.commodity_id  AND goods_id=#{goodsId}-->
+    <!--   </select>-->
+
+
+    <select id="updateCartDetail" resultType="INTEGER" parameterType="com.jd.edu.entity.CartDetail">
+        UPDATE  cart_detail SET cart_goods_number=#{cartGoodsNumber}
+        WHERE cart_id=#{cartId} AND goods_id=#{goodsId}
+        </select>
+
+    <select id="pageCartCondition" resultMap="CartDetailMapper" parameterType="com.jd.edu.entity.CartDetail">
+        SELECT  c.commodity_name,c.commodity_picture,c.commodity_stock,cd.cart_id,cd.goods_id,cd.cart_goods_number,cd.goods_price
+        FROM cart_detail cd, commodity c
+        WHERE  cart_id=#{cartId} AND cd.goods_id=c.commodity_id
+    </select>
+</mapper>

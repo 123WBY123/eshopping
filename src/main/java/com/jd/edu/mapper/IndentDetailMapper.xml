@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.edu.mapper.IndentDetailMapper">
+
+    <!-- 带User Commodity -->
+    <resultMap id="WithCommodityResultMap" type="com.jd.edu.entity.IndentDetail">
+        <result column="indent_id" jdbcType="VARCHAR" property="indentId" />
+        <result column="cid" jdbcType="VARCHAR" property="commodityId" />
+        <result column="commodity_num" jdbcType="INTEGER" property="commodityNum" />
+        <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+        <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+        <association property="indentCommodity" javaType="com.jd.edu.entity.Commodity">
+            <id column="comId" jdbcType="VARCHAR" property="commodityId" />
+            <result column="commodity_name" jdbcType="VARCHAR" property="commodityName" />
+            <result column="commodity_price" jdbcType="VARCHAR" property="commodityPrice" />
+            <result column="commodity_descript" jdbcType="VARCHAR" property="commodityDescript" />
+            <result column="commodity_picture" jdbcType="VARCHAR" property="commodityPicture" />
+        </association>
+        <association property="indentUser" javaType="com.jd.edu.entity.User">
+            <id column="user_id" jdbcType="VARCHAR" property="userId" />
+            <result column="user_name" jdbcType="VARCHAR" property="userName" />
+        </association>
+    </resultMap>
+
+    <select id="selectAllIndentDetail" resultMap="WithCommodityResultMap">
+        select i.indent_id,i.commodity_id cid, i.commodity_num,cn.commodity_id comId,  cn.commodity_name, cn.commodity_descript, cn.commodity_picture,cn.commodity_price,cn.commodity_descript , i.gmt_create, i.gmt_modified,u.user_name
+        from indent_detail i, commodity cn, user u where i.commodity_id = cn.commodity_id and i.indent_id=#{indentId} and cn.commodity_source = u.user_id
+    </select>
+
+    <update id="updateIndentToCommodity" parameterType="com.jd.edu.entity.IndentDetail">
+        UPDATE commodity
+            SET commodity_stock =  commodity_stock + #{commodityNum}
+        WHERE
+            commodity_id = #{commodityId}
+    </update>
+</mapper>

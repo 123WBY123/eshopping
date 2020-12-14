@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.edu.mapper.CommodityMapper">
+    <resultMap id="withKindAndSourceCommodityResultMap" type="com.jd.edu.entity.Commodity">
+        <id column="commodity_id" jdbcType="VARCHAR" property="commodityId"/>
+        <result column="commodity_name" jdbcType="VARCHAR" property="commodityName"/>
+        <result column="commodity_kind" jdbcType="VARCHAR" property="commodityKind"/>
+        <result column="commodity_source" jdbcType="VARCHAR" property="commoditySource"/>
+        <result column="commodity_status" jdbcType="INTEGER" property="commodityStatus"/>
+        <result column="commodity_price" jdbcType="FLOAT" property="commodityPrice"/>
+        <result column="commodity_picture" jdbcType="VARCHAR" property="commodityPicture"/>
+        <result column="commodity_descript" jdbcType="VARCHAR" property="commodityDescript"/>
+        <result column="commodity_sex" jdbcType="INTEGER" property="commoditySex"/>
+        <result column="commodity_color" jdbcType="VARCHAR" property="commodityColor"/>
+        <result column="commodity_stock" jdbcType="INTEGER" property="commodityStock"/>
+        <result column="commodity_wearlevel" jdbcType="INTEGER" property="commodityWearlevel"/>
+        <result column="commodity_populer" jdbcType="INTEGER" property="commodityPopuler"/>
+        <result column="commodity_to" jdbcType="VARCHAR" property="commodityTo"/>
+        <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+        <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+        <association property="kindBase" javaType="com.jd.edu.entity.KindBase">
+            <id column="kind_id" jdbcType="VARCHAR" property="kindId"/>
+            <result column="kind_name" jdbcType="VARCHAR" property="kindName"/>
+        </association>
+        <association property="user" javaType="com.jd.edu.entity.User">
+            <id column="user_id" jdbcType="VARCHAR" property="userId"/>
+            <result column="user_name" jdbcType="VARCHAR" property="userName"/>
+        </association>
+    </resultMap>
+
+    <!--查询所有产品带类别和买家名字-->
+    <select id="selectAllCommodityWithKindAndSource" resultMap="withKindAndSourceCommodityResultMap">
+        SELECT cm.commodity_id,cm.commodity_name,cm.commodity_picture,cm.commodity_descript,cm.commodity_price,cm.commodity_kind,
+cm.commodity_stock,cm.commodity_source,cm.commodity_sex,cm.commodity_wearlevel,cm.commodity_status,
+k.kind_name,us.user_name
+
+FROM commodity cm,kind_base k,user us
+WHERE cm.commodity_kind = k.kind_id AND cm.commodity_source= us.user_id
+    </select>
+    <!--查询所有上架商品-->
+    <select id="selectAllCommodityOnShelves" resultMap="withKindAndSourceCommodityResultMap">
+    SELECT cm.commodity_id,cm.commodity_name,cm.commodity_picture,cm.commodity_descript,cm.commodity_price,cm.commodity_kind,
+    cm.commodity_stock,cm.commodity_source,cm.commodity_sex,cm.commodity_wearlevel,cm.commodity_status,
+    k.kind_name,us.user_name
+    FROM commodity cm,kind_base k,user us
+    WHERE cm.commodity_status = 2 AND cm.commodity_kind = k.kind_id AND cm.commodity_source= us.user_id
+    </select>
+    <!--商品上架-->
+    <update id="setCommodityOnShelves" parameterType="com.jd.edu.entity.Commodity">
+        UPDATE commodity SET commodity_status = 2
+        WHERE commodity_id = #{commodityId}
+    </update>
+    <!--商品下架-->
+    <update id="setCommodityOffShelves" parameterType="com.jd.edu.entity.Commodity">
+        UPDATE commodity SET commodity_status = 1
+        WHERE commodity_id = #{commodityId}
+    </update>
+    <!--根据类别查询商品-->
+    <select id="selectCommodityByKind" resultMap="withKindAndSourceCommodityResultMap" parameterType="com.jd.edu.entity.KindBase">
+        SELECT
+	cm.commodity_id,
+	cm.commodity_name,
+	cm.commodity_picture,
+	cm.commodity_descript,
+	cm.commodity_price,
+	cm.commodity_kind,
+	cm.commodity_stock,
+	cm.commodity_source,
+	cm.commodity_sex,
+	cm.commodity_wearlevel,
+	k.kind_name,
+	cm.commodity_status
+FROM
+	commodity cm,kind_base k
+WHERE
+	cm.commodity_kind = ( SELECT k.kind_id FROM kind_base k WHERE k.kind_name = #{kindBase.kindName} )
+    </select>
+    <!--根据类别查询商品（分页）-->
+    <select id="getCommodityByKindFrontList" resultMap="withKindAndSourceCommodityResultMap" parameterType="com.jd.edu.entity.KindBase">
+SELECT
+	cm.commodity_id,
+	cm.commodity_name,
+	cm.commodity_picture,
+	cm.commodity_descript,
+	cm.commodity_price,
+	cm.commodity_kind,
+	cm.commodity_stock,
+	cm.commodity_source,
+	cm.commodity_sex,
+	cm.commodity_wearlevel,
+	cm.commodity_status,
+	k.kind_name
+FROM
+	commodity cm
+	LEFT JOIN kind_base k ON cm.commodity_kind = k.kind_id
+	WHERE 1 = 1
+	<if test="kindBase.kindName != null and kindBase.kindName != ''">
+        and k.kind_name = #{kindBase.kindName}
+    </if>
+    </select>
+    <!--根据名字查询（分页）-->
+    <select id="getCommodityByNameFrontList" resultMap="withKindAndSourceCommodityResultMap" parameterType="com.jd.edu.entity.Commodity">
+        SELECT cm.commodity_id,cm.commodity_name,cm.commodity_picture,cm.commodity_descript,cm.commodity_price,cm.commodity_kind,
+        cm.commodity_stock,cm.commodity_source,cm.commodity_sex,cm.commodity_wearlevel,
+        k.kind_name
+        FROM commodity cm,kind_base k
+        <if test = "commodity.commodityName != null">
+            where cm.commodity_name LIKE concat('%',#{commodity.commodityName},'%') and cm.commodity_kind = k.kind_id
+        </if>
+    </select>
+    <!--修改商品信息-->
+    <update id="updateCommodity" parameterType="com.jd.edu.entity.Commodity">
+        UPDATE commodity
+        <trim prefix="set" suffixOverrides=",">
+            <if test="kindBase.kindName != null">
+                commodity_kind = (select kind_id from kind_base where kind_name = #{kindBase.kindName}),
+            </if>
+            <if test="commoditySource != null">commodity_source = #{commoditySource},</if>
+            <if test="commodityName != null">commodity_name = #{commodityName},</if>
+            <if test="commodityStatus != null">commodity_status = #{commodityStatus},</if>
+            <if test="commodityPrice != null">commodity_price = #{commodityPrice},</if>
+            <if test="commodityPicture != null">commodity_picture = #{commodityPicture},</if>
+            <if test="commodityDescript != null">commodity_descript = #{commodityDescript},</if>
+            <if test="commoditySex != null">commodity_sex = #{commoditySex},</if>
+            <if test="commodityColor != null">commodity_color = #{commodityColor},</if>
+            <if test="commodityStock != null">commodity_stock = #{commodityStock},</if>
+            <if test="commodityWearlevel != null">commodity_wearlevel = #{commodityWearlevel},</if>
+            <if test="commodityPopuler != null">commodity_populer = #{commodityPopuler},</if>
+            <if test="commodityTo != null">commodity_to = #{commodityTo}</if>
+        </trim>
+        WHERE commodity_id = #{commodityId}
+    </update>
+    <!--根据id查询商品-->
+    <select id="selectCommodityById" resultMap="withKindAndSourceCommodityResultMap" parameterType="com.jd.edu.entity.Commodity">
+        SELECT *, k.kind_name,u.user_name
+        FROM
+            commodity c,
+            kind_base k,
+            user u
+        WHERE
+            c.commodity_id = #{commodityId}
+            AND c.commodity_kind = k.kind_id
+            AND c.commodity_source = u.user_id
+    </select>
+    <!-- 通过商品名称查询商品 -->
+    <select id="selectCommodityByName" resultMap="withKindAndSourceCommodityResultMap">
+        select * from commodity where commodity_name = #{commodityName}
+    </select>
+
+    <select id="getHotCommodity" resultMap="withKindAndSourceCommodityResultMap">
+        select * from commodity where commodity_populer = 1 limit 0,8
+    </select>
+
+    <select id="getCommonCommodity" resultMap="withKindAndSourceCommodityResultMap">
+        select * from commodity where commodity_populer = 0 limit 0,4
+    </select>
+
+    <!--查询所有下架的商品-->
+    <select id="selectAllCommodityOffShelvesFrontList" resultMap="withKindAndSourceCommodityResultMap">
+    SELECT cm.commodity_id,cm.commodity_name,cm.commodity_picture,cm.commodity_descript,cm.commodity_price,cm.commodity_kind,
+    cm.commodity_stock,cm.commodity_source,cm.commodity_sex,cm.commodity_wearlevel,cm.commodity_status,
+    k.kind_name,us.user_name
+    FROM commodity cm,kind_base k,user us
+    WHERE cm.commodity_status = 1 AND cm.commodity_kind = k.kind_id AND cm.commodity_source= us.user_id
+    </select>
+
+    <!--查询所有待审核商品-->
+    <select id="selectAllCommodityReadyToCheckList" resultMap="withKindAndSourceCommodityResultMap">
+        SELECT cm.commodity_id,cm.commodity_name,cm.commodity_picture,cm.commodity_descript,cm.commodity_price,cm.commodity_kind,
+    cm.commodity_stock,cm.commodity_source,cm.commodity_sex,cm.commodity_wearlevel,cm.commodity_status,
+    k.kind_name,us.user_name
+    FROM commodity cm,kind_base k,user us
+    WHERE cm.commodity_status = 0 AND cm.commodity_kind = k.kind_id AND cm.commodity_source= us.user_id
+    </select>
+</mapper>

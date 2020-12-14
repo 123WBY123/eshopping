@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.edu.mapper.IndentMapper">
+
+    <!-- 带User Commodity -->
+    <resultMap id="WithUserCommodityResultMap" type="com.jd.edu.entity.Indent">
+        <id column="indent_id" jdbcType="VARCHAR" property="indentId" />
+        <result column="indent_user_id" jdbcType="VARCHAR" property="indentUserId" />
+        <!--        <result column="indent_recevice_id" jdbcType="VARCHAR" property="indentReceviceId" />-->
+        <result column="indent_status" jdbcType="INTEGER" property="indentStatus" />
+        <result column="indent_way" jdbcType="INTEGER" property="indentWay" />
+        <result column="indent_address" jdbcType="VARCHAR" property="indentAddress" />
+        <result column="is_deleted" jdbcType="INTEGER" property="isDeleted" />
+        <result column="indent_total" jdbcType="FLOAT" property="indentTotal" />
+        <result column="indent_descript" jdbcType="VARCHAR" property="indentDescript" />
+        <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+        <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+        <association property="indentUser" javaType="com.jd.edu.entity.User">
+            <id column="user_id" jdbcType="VARCHAR" property="userId" />
+            <result column="user_name" jdbcType="VARCHAR" property="userName" />
+            <result column="user_nickname" jdbcType="VARCHAR" property="userNickname" />
+        </association>
+    </resultMap>
+    <select id="selectAllIndent"  resultMap="WithUserCommodityResultMap">
+         select i.indent_id, ur.user_name,ur.user_nickname,indent_user_id,indent_status,indent_way,indent_address,is_delete,indent_total,indent_descript,i.gmt_create,i.gmt_modified
+         from indent i, user ur where i.indent_user_id = ur.user_id and indent_status=#{status} and i.is_delete = 0
+
+     </select>
+    <select id="getByUserId" resultMap="WithUserCommodityResultMap">
+        select indent_id,indent_total from indent where indent_user_id = #{userId} order by gmt_create desc limit 0,1
+    </select>
+    <select id="getAllByUserId" resultMap="WithUserCommodityResultMap">
+        select * from indent where indent_user_id = #{userId} and is_delete = 0 ORDER BY indent_status,gmt_create desc
+    </select>
+    <select id="getByIndentId" resultMap="WithUserCommodityResultMap">
+        select * from indent where indent_id = #{indentId}
+    </select>
+    <update id="updateIndentById" parameterType="com.jd.edu.entity.Indent">
+        update indent set indent_total = #{indentTotal} where indent_id = #{indentId}
+    </update>
+</mapper>

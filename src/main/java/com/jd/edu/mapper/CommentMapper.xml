@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jd.edu.mapper.CommentMapper">
+    <resultMap id="CommentResultMap" type="com.jd.edu.entity.Comment">
+        <id column="comment_id" jdbcType="CHAR" property="commentId" />
+        <result column="user_id" jdbcType="CHAR" property="userId" />
+        <result column="commodity_id" jdbcType="CHAR" property="commodityId" />
+        <result column="indent_id" jdbcType="CHAR" property="indexId" />
+        <result column="content" jdbcType="VARCHAR" property="content" />
+        <result column="count" jdbcType="INTEGER" property="count" />
+        <result column="is_deleted" jdbcType="INTEGER" property="isDeleted" />
+        <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+        <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+        <association property="user" javaType="com.jd.edu.entity.User">
+            <id column="user_id" jdbcType="CHAR" property="userId" />
+            <result column="user_name" jdbcType="VARCHAR" property="userName" />
+            <result column="user_nickname" jdbcType="VARCHAR" property="userNickname" />
+            <result column="user_avatar" jdbcType="VARCHAR" property="userAvatar"/>
+        </association>
+        <association property="commodity" javaType="com.jd.edu.entity.Commodity">
+            <id column="commodity_id" jdbcType="CHAR" property="commodityId" />
+            <result column="commodity_name" jdbcType="VARCHAR" property="commodityName" />
+        </association>
+        <association property="indent" javaType="com.jd.edu.entity.Indent">
+            <id column="indent_id" jdbcType="CHAR" property="indentId" />
+        </association>
+    </resultMap>
+    <select id="selectAllComment" resultMap="CommentResultMap">
+        select c.comment_id,c.content,c.count,c.gmt_create,c.gmt_modified, u.user_name,u.user_nickname,cc.commodity_name
+        from comment c,user u ,commodity cc
+        where c.user_id=u.user_id and c.commodity_id=cc.commodity_id and c.is_deleted = 0
+        <if test="commentQuery.content != null and commentQuery.content != ''">
+            and c.content like concat ('%',#{commentQuery.content},'%')
+        </if>
+        <if test="commentQuery.gmtModified != null and commentQuery.gmtModified != ''">
+            and c.gmt_modified &lt;= #{commentQuery.gmtModified}
+        </if>
+        <if test="commentQuery.gmtCreate != null and commentQuery.gmtCreate != ''">
+            and c.gmt_create &gt;= #{commentQuery.gmtCreate}
+        </if>
+        ORDER BY gmt_create DESC
+    </select>
+    <update id="countAdd" parameterType="com.jd.edu.entity.Comment">
+        update comment set count = count + 1
+        where content=#{content}
+    </update>
+
+    <select id="selectOneComment" resultMap="CommentResultMap">
+        select comment_id,content from comment where comment_id = #{commentId}
+    </select>
+
+    <select id="selectGiComment" resultMap="CommentResultMap" parameterType="com.jd.edu.entity.User">
+     select c.content,u.user_nickname,u.user_avatar,c.gmt_create  from  comment c ,  user u  where c.commodity_id = #{commodityId} and c.is_deleted =0 and c.user_id=u.user_id
+    </select>
+
+    <select id="saveCom" resultType="INTEGER">
+        insert into comment (user_id,commodity_id,content,is_deleted) VALUES (#{userId},#{commodityId},#{content},0)
+    </select>
+</mapper>
